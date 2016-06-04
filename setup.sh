@@ -1,3 +1,3 @@
 #/bin/bash
 
-ln -s ./Projects/dotfiles/.spacemacs ~/.spacemacs
+ln -s ./.spacemacs ~/.spacemacs
