@@ -1,6 +1,6 @@
 * My Personal Configuration
 includes the following configurations:
-- [X] spacemacs
-- [ ] bash
-- [ ] ssh
-- [ ] other files I have no idea I had
+- checkered_flag: spacemacs
+- bash
+- ssh
+- other files I have no idea I had
