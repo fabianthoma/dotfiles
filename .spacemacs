@@ -18,6 +18,9 @@ values."
    ;; of a list then all discovered layers will be installed.
    dotspacemacs-configuration-layers
    '(
+     python
+     javascript
+     html
      ;; Default Layers that should not be removed
      better-defaults
      emacs-lisp
@@ -38,6 +41,7 @@ values."
 
      ;; General purpose Layers
      emoji
+     plantuml
      markdown
      org
      (shell :variables
@@ -52,14 +56,16 @@ values."
      github
      (version-control :variables
                       version-control-global-margin t
-                      version-control-diff-tool 'git-gutter+)
+                      version-control-diff-tool 'diff-hl)
 
+     latex
+     extra-langs
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
    ;; packages, then consider creating a layer. You can also put the
    ;; configuration in `dotspacemacs/user-config'.
-   dotspacemacs-additional-packages '(vala-mode editorconfig)
+   dotspacemacs-additional-packages '(vala-mode editorconfig org-caldav org-mobile-sync scad-preview ob-octave octave)
    ;; A list of packages and/or extensions that will not be install and loaded.
    dotspacemacs-excluded-packages '()
    ;; If non-nil spacemacs will delete any orphan packages, i.e. packages that
@@ -82,7 +88,7 @@ values."
    ;; This variable has no effect if Emacs is launched with the parameter
    ;; `--insecure' which forces the value of this variable to nil.
    ;; (default t)
-   dotspacemacs-elpa-https t
+   dotspacemacs-elpa-https nil
    ;; Maximum allowed time in seconds to contact an ELPA repository.
    dotspacemacs-elpa-timeout 5
    ;; If non nil then spacemacs will check for updates at startup
@@ -110,9 +116,10 @@ values."
    ;; `dotspacemacs-startup-lists' doesn't include `recents'. (default 5)
    dotspacemacs-startup-recent-list-size 5
    ;; List of themes, the first of the list is loaded when spacemacs starts.
-   ;; Press <SPC> T n to cycle to the next theme in the list (works great
+   ;; Press <SPC> T n to cycle to the next theme int the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(spacemacs-dark
+   dotspacemacs-themes '(misterioso
+                         spacemacs-dark
                          spacemacs-light
                          solarized-light
                          solarized-dark
@@ -124,7 +131,7 @@ values."
    ;; Default font. `powerline-scale' allows to quickly tweak the mode-line
    ;; size to make separators look not too crappy.
    dotspacemacs-default-font '("Source Code Pro"
-                               :size 14
+                               :size 18
                                :weight normal
                                :width normal
                                :powerline-scale 1.2)
@@ -151,7 +158,7 @@ values."
    ;; Emacs commands (M-x).
    ;; By default the command key is `:' so ex-commands are executed like in Vim
    ;; with `:' and Emacs commands are executed with `<leader> :'.
-   dotspacemacs-command-key ":"
+   dotspacemacs-command-key "."
    ;; If non nil `Y' is remapped to `y$'. (default t)
    dotspacemacs-remap-Y-to-y$ t
    ;; Name of the default layout (default "Default")
@@ -161,7 +168,7 @@ values."
    dotspacemacs-display-default-layout t
    ;; If non nil then the last auto saved layouts are resume automatically upon
    ;; start. (default nil)
-   dotspacemacs-auto-resume-layouts nil
+   dotspacemacs-auto-resume-layouts t
    ;; Location where to auto-save files. Possible values are `original' to
    ;; auto-save the file in-place, `cache' to auto-save the file to another
    ;; file stored in the cache directory and `nil' to disable auto-saving.
@@ -186,7 +193,7 @@ values."
    dotspacemacs-enable-paste-micro-state t
    ;; Which-key delay in seconds. The which-key buffer is the popup listing
    ;; the commands bound to the current keystroke sequence. (default 0.4)
-   dotspacemacs-which-key-delay 0.4
+   dotspacemacs-which-key-delay 0.7
    ;; Which-key frame position. Possible values are `right', `bottom' and
    ;; `right-then-bottom'. right-then-bottom tries to display the frame to the
    ;; right; if there is insufficient space it displays it at the bottom.
@@ -198,14 +205,14 @@ values."
    dotspacemacs-loading-progress-bar t
    ;; If non nil the frame is fullscreen when Emacs starts up. (default nil)
    ;; (Emacs 24.4+ only)
-   dotspacemacs-fullscreen-at-startup nil
+   dotspacemacs-fullscreen-at-startup t
    ;; If non nil `spacemacs/toggle-fullscreen' will not use native fullscreen.
    ;; Use to disable fullscreen animations in OSX. (default nil)
    dotspacemacs-fullscreen-use-non-native nil
    ;; If non nil the frame is maximized when Emacs starts up.
    ;; Takes effect only if `dotspacemacs-fullscreen-at-startup' is nil.
    ;; (default nil) (Emacs 24.4+ only)
-   dotspacemacs-maximized-at-startup t
+   dotspacemacs-maximized-at-startup nil
    ;; A value from the range (0..100), in increasing opacity, which describes
    ;; the transparency level of a frame when it's active or selected.
    ;; Transparency can be toggled through `toggle-transparency'. (default 90)
@@ -255,25 +262,27 @@ values."
 It is called immediately after `dotspacemacs/init'.  You are free to put almost
 any user code here.  The exception is org related code, which should be placed
 in `dotspacemacs/user-config'."
+  (editorconfig-mode 1)
   )
 
 (defun dotspacemacs/user-config ()
   "Configuration function for user code.
 This function is called at the very end of Spacemacs initialization after
 layers configuration. You are free to put any user code."
+  (setq org-mobile-directory "~/org/mobile")
+  (setq org-habit-show-habits-only-for-today nil)
   ;; Java Integration
   (setq eclim-eclipse-dirs "~/Projects/java/eclipse/"
         eclim-executable "~/Projects/java/eclipse/eclim"
         eclimd-executable "~/Projects/java/eclipse/eclimd")
-  (require 'eclimd)
-
+  ;;((setq-default js2-basic-offset 2
+   ;;              js-indent-level 2)require 'eclimd)
+  (setq org-plantuml-jar-path "/usr/share/plantuml/plantuml.jar")
   ;; Indentation:
   (indent-guide-global-mode)
   (setq indent-tabs-mode nil)
   (setq tab-width 4)
 
-  ;; Powerline:
-  (setq powerline-default-separator 'arrow)
   ;; Enable some dead keys:
   (define-key key-translation-map [dead-grave] "`")
   (define-key key-translation-map [dead-acute] "'")
@@ -286,8 +295,29 @@ layers configuration. You are free to put any user code."
   (define-key global-map (kbd "C--") 'text-scale-decrease)
 
   (global-company-mode)
-  (editorconfig-mode 1)
-  )
+  (setq org-plantuml-jar-path "/home/fabianthoma/org/plantuml.jar")
+;; active Org-babel languages
+  (setq org-ditaa-jar-path "/home/fabianthoma/org/ditaa0_9.jar")
+  (setq org-export-babel-evaluate nil)
+  ;;(setq org-startup-indented t)
+  ;; increase imenu depth to include third level headings
+  ;;(setq org-imenu-depth 3)
+  ;; Set sensible mode for editing dot files
+  ;;(add-to-list 'org-src-lang-modes '("dot" . graphviz-dot))
+  ;; Update images from babel code blocks automatically
+  ;;(add-hook 'org-babel-after-execute-hook 'org-display-inline-images)
+  ;;(setq org-src-fontify-natively t)
+  ;;(setq org-src-tab-acts-natively t)
+  (setq org-confirm-babel-evaluate nil)
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (ditaa . t)
+;;     (scad . t)
+     (octave . t))
+   )
+
+)
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -296,7 +326,25 @@ layers configuration. You are free to put any user code."
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(org-agenda-files (quote ("~/org/notes.org"))))
+ '(add-to-list (quote org-latex-classes) t)
+ '(org-agenda-custom-commands
+   (quote
+    (("n" "Agenda and all TODOs"
+      ((agenda ""
+               ((org-agenda-overriding-header "Agenda (f = forwards, b = backwards)")
+                (org-agenda-span 7)
+                (org-agenda-start-day "-1d")
+                (org-agenda-start-on-weekday nil)))
+       (alltodo ""
+                ((org-agenda-overriding-header "TODO Items"))))
+      nil))))
+ '(org-agenda-files (quote ("~/org/")))
+ '(org-latex-classes nil)
+ '(org-modules
+   (quote
+    (org-bbdb org-bibtex org-crypt org-docview org-gnus org-habit org-info org-irc org-mhe org-rmail org-w3m)))
+ '(paradox-github-token t))
+
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
