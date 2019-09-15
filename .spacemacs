@@ -33,7 +33,7 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(
+   '(html
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -473,14 +473,14 @@ you should place your code here."
                   (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING"))))
 
     (setq org-todo-keyword-faces
-          (quote (("TODO" :foreground "red" :weight bold)
-                  ("NEXT" :foreground "blue" :weight bold)
-                  ("DONE" :foreground "forest green" :weight bold)
-                  ("WAITING" :foreground "orange" :weight bold)
-                  ("HOLD" :foreground "magenta" :weight bold)
-                  ("CANCELLED" :foreground "forest green" :weight bold)
-                  ("MEETING" :foreground "forest green" :weight bold)
-                  ("PHONE" :foreground "forest green" :weight bold))))
+          (quote (("TODO" :foreground "white" :background "red" :weight bold)
+                  ("NEXT" :foreground "white" :background "blue" :weight bold)
+                  ("DONE" :foreground "white" :background "forest green" :weight bold)
+                  ("WAITING" :foreground "white" :background "orange" :weight bold)
+                  ("HOLD" :foreground "white" :background "magenta" :weight bold)
+                  ("CANCELLED" :foreground "white" :background "forest green" :weight bold)
+                  ("MEETING" :foreground "white" :background "forest green" :weight bold)
+                  ("PHONE" :foreground "white" :background "forest green" :weight bold))))
     (setq org-todo-state-tags-triggers
           (quote (("CANCELLED" ("CANCELLED" . t))
                   ("WAITING" ("WAITING" . t))
@@ -814,22 +814,28 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                  ((org-agenda-overriding-header "Habits")
                   (org-agenda-sorting-strategy
                    '(todo-state-down effort-up category-keep))))
-                (" " "Agenda"
-                 ((agenda "" nil)
+                (" " "Custom Agenda"
+                 ((agenda ""
+                          ((org-agenda-overriding-header "Weekla agenda (f - forward, b - backward)")
+                           (org-agenda-prefix-format "%s %b")))
+
                   (tags "REFILE"
                         ((org-agenda-overriding-header "Tasks to Refile")
-                         (org-tags-match-list-sublevels nil)))
+                         (org-tags-match-list-sublevels nil)
+                         (org-agenda-prefix-format "%b")))
                   (tags-todo "-CANCELLED/!"
                              ((org-agenda-overriding-header "Stuck Projects")
                               (org-agenda-skip-function 'bh/skip-non-stuck-projects)
                               (org-agenda-sorting-strategy
-                               '(category-keep))))
+                               '(category-keep))
+                              (org-agenda-prefix-format "%b")))
                   (tags-todo "-HOLD-CANCELLED/!"
                              ((org-agenda-overriding-header "Projects")
                               (org-agenda-skip-function 'bh/skip-non-projects)
                               (org-tags-match-list-sublevels 'indented)
                               (org-agenda-sorting-strategy
-                               '(category-keep))))
+                               '(category-keep))
+                              (org-agenda-prefix-format "%b")))
                   (tags-todo "-CANCELLED/!NEXT"
                              ((org-agenda-overriding-header (concat "Project Next Tasks"
                                                                     (if bh/hide-scheduled-and-waiting-next-tasks
@@ -841,7 +847,8 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                               (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-sorting-strategy
-                               '(todo-state-down effort-up category-keep))))
+                               '(todo-state-down effort-up category-keep))
+                              (org-agenda-prefix-format "%b")))
                   (tags-todo "-REFILE-CANCELLED-WAITING-HOLD/!"
                              ((org-agenda-overriding-header (concat "Project Subtasks"
                                                                     (if bh/hide-scheduled-and-waiting-next-tasks
@@ -852,7 +859,8 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                               (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-sorting-strategy
-                               '(category-keep))))
+                               '(category-keep))
+                              (org-agenda-prefix-format "%b")))
                   (tags-todo "-REFILE-CANCELLED-WAITING-HOLD/!"
                              ((org-agenda-overriding-header (concat "Standalone Tasks"
                                                                     (if bh/hide-scheduled-and-waiting-next-tasks
@@ -863,7 +871,8 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                               (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-todo-ignore-with-date bh/hide-scheduled-and-waiting-next-tasks)
                               (org-agenda-sorting-strategy
-                               '(category-keep))))
+                               '(category-keep))
+                              (org-agenda-prefix-format "%b")))
                   (tags-todo "-CANCELLED+WAITING|HOLD/!"
                              ((org-agenda-overriding-header (concat "Waiting and Postponed Tasks"
                                                                     (if bh/hide-scheduled-and-waiting-next-tasks
@@ -872,11 +881,13 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                               (org-agenda-skip-function 'bh/skip-non-tasks)
                               (org-tags-match-list-sublevels nil)
                               (org-agenda-todo-ignore-scheduled bh/hide-scheduled-and-waiting-next-tasks)
-                              (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)))
+                              (org-agenda-todo-ignore-deadlines bh/hide-scheduled-and-waiting-next-tasks)
+                              (org-agenda-prefix-format "%b")))
                   (tags "-REFILE/"
                         ((org-agenda-overriding-header "Tasks to Archive")
                          (org-agenda-skip-function 'bh/skip-non-archivable-tasks)
-                         (org-tags-match-list-sublevels nil))))
+                         (org-tags-match-list-sublevels nil))
+                        (org-agenda-prefix-format "%b")))
                  nil))))
 
   ;; Tags with fast selection keys
@@ -904,5 +915,30 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
   ;; For tag searches ignore tasks with scheduled and deadline dates
   (setq org-agenda-tags-todo-honor-ignore-options t)
   ;; Implement some of http://doc.norang.ca/org-mode.html ENDING HERE
+
+  ;; own org mode stuff
+  (with-eval-after-load 'org-agenda 
+    (add-to-list 'org-agenda-prefix-format '(todo . "  %b"))
+    )
   )
+)
+(defun dotspacemacs/emacs-custom-settings ()
+  "Emacs custom settings.
+This is an auto-generated function, do not modify its content directly, use
+Emacs customize menu instead.
+This function is called at the very end of Spacemacs initialization."
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (ox-gfm ob-ipython yasnippet web-mode web-beautify tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data company add-node-modules-path xterm-color ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle shell-pop restart-emacs rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer orgit org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-bullets org-brain open-junk-file nameless multi-term move-text mmm-mode markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum link-hint indent-guide hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-gitignore helm-git-grep helm-flx helm-descbinds helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md font-lock+ flycheck-pos-tip flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu eshell-z eshell-prompt-extras esh-help elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish diff-hl devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
  )
+)
