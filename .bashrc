@@ -219,3 +219,10 @@ function parse_git_dirty {
 
 export PS1="\[\e[34m\]\u\[\e[m\]@\[\e[32m\]\w\[\e[m\]\[\e[31m\]\`parse_git_branch\`\[\e[m\]
 \\$ "
+
+export PATH="$HOME/.cargo/bin:$PATH"
+
+
+. $HOME/.asdf/asdf.sh
+
+. $HOME/.asdf/completions/asdf.bash

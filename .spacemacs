@@ -33,7 +33,12 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(html
+   '(
+     yaml
+     elixir
+     javascript
+     rust
+     html
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
      ;; Uncomment some layer names and press `SPC f e R' (Vim style) or
@@ -63,7 +68,7 @@ This function should only modify configuration layer settings."
    ;; To use a local version of a package, use the `:location' property:
    ;; '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '()
+   dotspacemacs-additional-packages '(org-drill)
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -78,7 +83,10 @@ This function should only modify configuration layer settings."
    ;; installs only the used packages but won't delete unused ones. `all'
    ;; installs *all* packages supported by Spacemacs and never uninstalls them.
    ;; (default is `used-only')
-   dotspacemacs-install-packages 'used-only))
+   dotspacemacs-install-packages 'used-only
+
+
+   ))
 
 (defun dotspacemacs/init ()
   "Initialization:
@@ -298,7 +306,7 @@ It should only modify the values of Spacemacs settings."
 
    ;; If non-nil the frame is fullscreen when Emacs starts up. (default nil)
    ;; (Emacs 24.4+ only)
-   dotspacemacs-fullscreen-at-startup t
+   dotspacemacs-fullscreen-at-startup nil
 
    ;; If non-nil `spacemacs/toggle-fullscreen' will not use native fullscreen.
    ;; Use to disable fullscreen animations in OSX. (default nil)
@@ -455,6 +463,7 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
 This function is called only while dumping Spacemacs configuration. You can
 `require' or `load' the libraries of your choice that will be included in the
 dump."
+  (require 'org-drill)
   )
 
 (defun dotspacemacs/user-config ()
@@ -468,6 +477,7 @@ you should place your code here."
   ;; Implement some of http://doc.norang.ca/org-mode.html STARTING HERE
   (with-eval-after-load 'org
     (add-to-list 'org-modules 'org-habit t)
+    (add-to-list 'org-modules 'org-drill t)
     (setq org-todo-keywords
           (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
                   (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "PHONE" "MEETING"))))
@@ -490,28 +500,30 @@ you should place your code here."
                   ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
                   ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
 
-    (setq org-directory "~/Nextcloud/org")
-    (setq org-default-notes-file "~/Nextcloud/org/refile.org")
-    (setq org-agenda-files (list "~/Nextcloud/org/"))
+    (setq org-directory "~/org")
+    (setq org-default-notes-file "~/org/refile.org")
+    (setq org-agenda-files (list "~/org/"))
 
 
   ;; Capture templates for: TODO tasks, Notes, appointments, phone calls, meetings, and org-protocol
   (setq org-capture-templates
-        (quote (("t" "todo" entry (file "~/Nextcloud/org/refile.org")
+        (quote (("t" "todo" entry (file "~/org/refile.org")
                  "* TODO %?\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("r" "respond" entry (file "~/Nextcloud/org/refile.org")
+                ("r" "respond" entry (file "~/org/refile.org")
                  "* NEXT Respond to %:from on %:subject\nSCHEDULED: %t\n%U\n%a\n" :clock-in t :clock-resume t :immediate-finish t)
-                ("n" "note" entry (file "~/Nextcloud/org/refile.org")
+                ("n" "note" entry (file "~/org/refile.org")
                  "* %? :NOTE:\n%U\n%a\n" :clock-in t :clock-resume t)
-                ("j" "Journal" entry (file+datetree "~/Nextcloud/org/diary.org")
+                ("j" "Journal" entry (file+datetree "~/org/diary.org")
                  "* %?\n%U\n" :clock-in t :clock-resume t)
-                ("w" "org-protocol" entry (file "~/Nextcloud/org/refile.org")
+                ("w" "org-protocol" entry (file "~/org/refile.org")
                  "* TODO Review %c\n%U\n" :immediate-finish t)
-                ("m" "Meeting" entry (file "~/Nextcloud/org/refile.org")
+                ("m" "Meeting" entry (file "~/org/refile.org")
                  "* MEETING with %? :MEETING:\n%U" :clock-in t :clock-resume t)
-                ("p" "Phone call" entry (file "~/Nextcloud/org/refile.org")
+                ("p" "Phone call" entry (file "~/org/refile.org")
                  "* PHONE %? :PHONE:\n%U" :clock-in t :clock-resume t)
-                ("h" "Habit" entry (file "~/Nextcloud/org/refile.org")
+                ("q" "org-drill question" entry (file "~/Nextcloud/segeln/hochseeschein/ccs_uebung/new.org")
+                 "** %^{number} :drill:\n [[./%\\1.png]]\n*** Answer\n%^{answer}" :immediate-finish t)
+                ("h" "Habit" entry (file "~/org/refile.org")
                  "* NEXT %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: NEXT\n:END:\n"))))
 
   ;; Remove empty LOGBOOK drawers on clock out
@@ -799,6 +811,29 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
           nil
         next-headline)))
 
+  (defun bh/skip-non-archivable-tasks ()
+    "Skip trees that are not available for archiving"
+    (save-restriction
+      (widen)
+      ;; Consider only tasks with done todo headings as archivable candidates
+      (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+            (subtree-end (save-excursion (org-end-of-subtree t))))
+        (if (member (org-get-todo-state) org-todo-keywords-1)
+            (if (member (org-get-todo-state) org-done-keywords)
+                (let* ((daynr (truncate (string-to-number (format-time-string "%d" (current-time)))))
+                       (a-month-ago (* 60 60 24 (+ daynr 1)))
+                       (last-month (format-time-string "%Y-%m-" (time-subtract (current-time) (seconds-to-time a-month-ago))))
+                       (this-month (format-time-string "%Y-%m-" (current-time)))
+                       (subtree-is-current (save-excursion
+                                             (forward-line 1)
+                                             (and (< (point) subtree-end)
+                                                  (re-search-forward (concat last-month "\\|" this-month) subtree-end t)))))
+                  (if subtree-is-current
+                      subtree-end ; Has a date in this month or last month, skip it
+                    nil))  ; available to archive
+              (or subtree-end (point-max)))
+          next-headline))))
+
   ;; Do not dim blocked tasks
   (setq org-agenda-dim-blocked-tasks nil)
 
@@ -814,7 +849,7 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                  ((org-agenda-overriding-header "Habits")
                   (org-agenda-sorting-strategy
                    '(todo-state-down effort-up category-keep))))
-                (" " "Custom Agenda"
+                ("A" "Custom Agenda"
                  ((agenda ""
                           ((org-agenda-overriding-header "Weekla agenda (f - forward, b - backward)")
                            (org-agenda-prefix-format "%s %b")))
@@ -889,7 +924,15 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
                          (org-tags-match-list-sublevels nil))
                         (org-agenda-prefix-format "%b")))
                  nil))))
-
+  (setq org-agenda-sorting-strategy
+        '((agenda habit-down time-up user-defined-up effort-up category-keep)
+          (todo category-up effort-up)
+          (tags category-up effort-up)
+          (search category-up)))
+  (setq org-agenda-time-grid '((daily remove-match)
+                               (0000 0200 1200 1400 1600 1800 2000 2200)
+                               "......"
+                               "----------------"))
   ;; Tags with fast selection keys
   (setq org-tag-alist (quote ((:startgroup)
                               ("@errand" . ?e)
@@ -921,6 +964,8 @@ Skip project and sub-project tasks, habits, and loose non-project tasks."
     (add-to-list 'org-agenda-prefix-format '(todo . "  %b"))
     )
   )
+  
+
 )
 (defun dotspacemacs/emacs-custom-settings ()
   "Emacs custom settings.
@@ -934,7 +979,7 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (ox-gfm ob-ipython yasnippet web-mode web-beautify tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data company add-node-modules-path xterm-color ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle shell-pop restart-emacs rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer orgit org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-bullets org-brain open-junk-file nameless multi-term move-text mmm-mode markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum link-hint indent-guide hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-gitignore helm-git-grep helm-flx helm-descbinds helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md font-lock+ flycheck-pos-tip flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu eshell-z eshell-prompt-extras esh-help elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish diff-hl devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))))
+    (ob-elixir flycheck-mix flycheck-credo alchemist elixir-mode tern nodejs-repl skewer-mode multiple-cursors js2-mode js-doc import-js grizzl toml-mode racer helm-gtags ggtags flycheck-rust counsel-gtags cargo rust-mode ox-gfm ob-ipython yasnippet web-mode web-beautify tagedit slim-mode scss-mode sass-mode pug-mode prettier-js impatient-mode simple-httpd helm-css-scss haml-mode emmet-mode counsel-css counsel swiper ivy company-web web-completion-data company add-node-modules-path xterm-color ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons smeargle shell-pop restart-emacs rainbow-delimiters popwin persp-mode pcre2el password-generator paradox overseer orgit org-projectile org-present org-pomodoro org-mime org-download org-cliplink org-bullets org-brain open-junk-file nameless multi-term move-text mmm-mode markdown-toc magit-svn magit-gitflow macrostep lorem-ipsum link-hint indent-guide hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org-rifle helm-org helm-mode-manager helm-make helm-gitignore helm-git-grep helm-flx helm-descbinds helm-ag google-translate golden-ratio gnuplot gitignore-templates gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe git-gutter-fringe+ gh-md font-lock+ flycheck-pos-tip flycheck-package flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-org evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu eshell-z eshell-prompt-extras esh-help elisp-slime-nav editorconfig dumb-jump dotenv-mode doom-modeline diminish diff-hl devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode browse-at-remote auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -942,3 +987,76 @@ This function is called at the very end of Spacemacs initialization."
  ;; If there is more than one, they won't work right.
  )
 )
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(org-capture-templates
+   (quote
+    (("t" "todo" entry
+      (file "~/org/refile.org")
+      "* TODO %?
+%U
+%a
+" :clock-in t :clock-resume t)
+     ("r" "respond" entry
+      (file "~/org/refile.org")
+      "* NEXT Respond to %:from on %:subject
+SCHEDULED: %t
+%U
+%a
+" :immediate-finish t :clock-in t :clock-resume t)
+     ("n" "note" entry
+      (file "~/org/refile.org")
+      "* %? :NOTE:
+%U
+%a
+" :clock-in t :clock-resume t)
+     ("j" "Journal" entry
+      (file+olp+datetree "~/org/diary.org")
+      "* %?
+%U
+" :clock-in t :clock-resume t)
+     ("w" "org-protocol" entry
+      (file "~/org/refile.org")
+      "* TODO Review %c
+%U
+" :immediate-finish t)
+     ("m" "Meeting" entry
+      (file "~/org/refile.org")
+      "* MEETING with %? :MEETING:
+%U" :clock-in t :clock-resume t)
+     ("p" "Phone call" entry
+      (file "~/org/refile.org")
+      "* PHONE %? :PHONE:
+%U" :clock-in t :clock-resume t)
+     ("q" "org-drill question" entry
+      (file "~/Nextcloud/segeln/hochseeschein/ccs_uebung/new.org")
+      "** %^{number} :drill:
+ [[./%\\1.png]]
+*** Answer
+%^{answer}" :immediate-finish t)
+     ("h" "Habit" entry
+      (file "~/org/refile.org")
+      "* NEXT %?
+%U
+%a
+SCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")
+:PROPERTIES:
+:STYLE: habit
+:REPEAT_TO_STATE: NEXT
+:END:
+"))))
+ '(org-modules
+   (quote
+    (ol-bbdb ol-bibtex ol-docview ol-eww ol-gnus org-habit ol-info ol-irc ol-mhe ol-rmail ol-w3m drill)))
+ '(package-selected-packages
+   (quote
+    (yaml-mode persist org-drill xterm-color ws-butler winum which-key web-mode web-beautify volatile-highlights vi-tilde-fringe uuidgen use-package toml-mode toc-org tagedit spaceline powerline smeargle slim-mode shell-pop scss-mode sass-mode restart-emacs rainbow-delimiters racer pug-mode popwin persp-mode pcre2el paradox spinner orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download org-bullets open-junk-file ob-elixir neotree multi-term move-text mmm-mode markdown-toc magit-gitflow magit-popup macrostep lorem-ipsum livid-mode skewer-mode simple-httpd linum-relative link-hint json-mode json-snatcher json-reformat js2-refactor yasnippet multiple-cursors js2-mode js-doc indent-guide hydra lv hungry-delete htmlize hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile projectile helm-mode-manager helm-make helm-gitignore request helm-flx helm-descbinds helm-css-scss helm-ag haml-mode google-translate golden-ratio gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md flycheck-rust flycheck-pos-tip pos-tip flycheck-credo flycheck flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired f evil-tutor evil-surround evil-search-highlight-persist highlight evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit magit git-commit with-editor transient evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu eshell-z eshell-prompt-extras esh-help emmet-mode elisp-slime-nav dumb-jump diminish diff-hl define-word column-enforce-mode coffee-mode clean-aindent-mode cargo markdown-mode rust-mode bind-map bind-key auto-highlight-symbol auto-compile packed alchemist s company dash elixir-mode pkg-info epl aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
